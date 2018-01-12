@@ -24,7 +24,6 @@ type alias Model =
           --or--
           sometimes numbering todo items and just erasing and rewriting numbers (computers do this way faster than people)
            [computers use something called 'uid's or "unique identifiers"]
-
            * a 'uid' in that sense like an alias in it's own right! It's a number that means another thing.
             ** a todo item here will mean a record with a particular format
    Let's make us a record, yo!!
@@ -69,10 +68,8 @@ model =
 {- right now, each todo will be considered a string,
     no other metadata will be considered like which todo number this is..
     or if the todo is completed
-
    'data' holds whatever the user will be typing into an empty task slot, consider it like
     the next blank line on a physical todo list
-
     'uniqueId' we haven't made any todo items yet, so the first todo will be number 0. Computers
     are strange and start at 0. Zero's history is cray: [ https://yaleglobal.yale.edu/history-zero ]
 -}
@@ -104,10 +101,8 @@ viewTodos =
     `
             renderEntry entry =
                 li [] [ text (toString entry) ]
-
             viewTodos =
                 div [] (List.map renderEntry model.todos)
-
     BUT it's kind of weird right? I mean one line per function? And they go together kind right?
     Doesn't that maybe feel weird like it would be nice to combine them?
     If you feel this way, Let / In is your friend. viewTodos in this case is like,
