@@ -19,26 +19,10 @@ type alias TodoItem =
     }
 
 
-todoZero : TodoItem
-todoZero =
-    { desc = "my todoooooo! "
-    , isComplete = False
-    , uniqueId = 0
-    }
-
-
-todoOne : TodoItem
-todoOne =
-    { desc = "my todo twooo "
-    , isComplete = False
-    , uniqueId = 1
-    }
-
-
-newTodo userInput =
+newTodo userInput uid =
     [ { desc = userInput
       , isComplete = False
-      , uniqueId = List.length model.todoItems
+      , uniqueId = uid
       }
     ]
 
@@ -51,7 +35,7 @@ type Msg
 
 model : Model
 model =
-    { todoItems = [ todoZero, todoOne ]
+    { todoItems = []
     , data = "(like a blank line)"
     }
 
@@ -64,12 +48,7 @@ update msg model =
         Add ->
             let
                 todo =
-                    -- [ { desc = "my todo three"
-                    --   , isComplete = False
-                    --   , uniqueId = List.length model.todoItems
-                    --   }
-                    -- ]
-                    newTodo model.data
+                    newTodo model.data (List.length model.todoItems)
             in
                 { model
                     | todoItems =
@@ -87,15 +66,13 @@ view model =
     div []
         [ h1 [] [ text "Todo" ]
         , div [ class "todos-box" ]
-            [ p []
-                [ text "our todos will go here" ]
-            , viewInput model
-            , viewTodos
+            [ viewInput model
+            , viewTodos model
             ]
         ]
 
 
-viewTodos =
+viewTodos model =
     let
         renderEntry ({ desc, isComplete, uniqueId } as todoItem) =
             li [] [ text (String.join " " [ (toString desc), (toString uniqueId), (toString isComplete) ]) ]
@@ -120,8 +97,7 @@ viewInput model =
             , onInput UpdateField
             ]
             []
-        , span [ style [ ( "margin-left", "4px" ) ] ] [ text model.data ]
-        , button [ onClick Add ] [ text "coming soon: Add Todo" ]
+        , button [ onClick Add ] [ text "Add Todo" ]
         ]
 
 

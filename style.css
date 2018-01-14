@@ -8,11 +8,24 @@ h1 {
 }
 
 .todos-box {
-    width: 30%;
+    width: 36%;
     margin: auto;
-    padding: 15px;
-    background-color: #aaa;
-    border: 3px solid #999;
+    padding: 7px;
+    background-color: #e6eaeb;
+    border: 5px solid #f1ffe7;
     border-radius: 4px;
+    text-align: center;
     font-family: 'Montserrat';
+}
+
+
+input[type=text] {
+    width: 92%;
+    height: 40px;
+    border: 4px solid #c5c3bc;
+    border-radius: 5px;
+    padding: 2px 0 0 16px;
+    font-size: 1.7em;
+    font-weight: lighter;
+    color: grey;
 }
