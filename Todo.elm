@@ -1,33 +1,15 @@
 module Todo exposing (..)
 
+import Dom
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 
 
 type alias Model =
-    { todoItems : List TodoItem -- now we have a list of aliased records!
+    { todoItems : List TodoItem
     , data : String
     }
-
-
-
-{- what is an alias?
-   An alias is shorthand for a larger piece of code
-   Each item on a todo list will have more than piece of data associated with it. Unlike a hand written list
-   where we cross off todo items and can see their order visually we need a way represent that in computer code.
-   Because we don't use computers by literally looking at bits code could be considered NOT visual medium.
-   So in the alias below 'TodoItem' we are using a record to store all the data that would typically
-   we would just know by looking at a real todo list. Things you do to todo lists, generally:
-       1) write down something to do [a description]
-       2) cross off an item or mark it as complete in some other way like a check mark [an indicator of completeness]
-       3) move items around by erasing them and rewriting elsewhere
-          --or--
-          sometimes numbering todo items and just erasing and rewriting numbers (computers do this way faster than people)
-           [computers use something called 'uid's or "unique identifiers"]
-           * a 'uid' in that sense like an alias in it's own right! It's a number that means another thing.
-            ** a todo item here will mean a record with a particular format
-   Let's make us a record, yo!!
--}
 
 
 type alias TodoItem =
@@ -45,16 +27,26 @@ todoZero =
     }
 
 
-
--- usually people start at one, but since this is for a computer, we'll start with this funny name, todoZero
-
-
 todoOne : TodoItem
 todoOne =
     { desc = "my todo twooo "
     , isComplete = False
     , uniqueId = 1
     }
+
+
+newTodo userInput =
+    [ { desc = userInput
+      , isComplete = False
+      , uniqueId = List.length model.todoItems
+      }
+    ]
+
+
+type Msg
+    = NoOp
+    | Add
+    | UpdateField String
 
 
 model : Model
@@ -64,22 +56,40 @@ model =
     }
 
 
+update msg model =
+    case msg of
+        NoOp ->
+            model
 
-{- right now, each todo will be considered a string,
-    no other metadata will be considered like which todo number this is..
-    or if the todo is completed
-   'data' holds whatever the user will be typing into an empty task slot, consider it like
-    the next blank line on a physical todo list
-    'uniqueId' we haven't made any todo items yet, so the first todo will be number 0. Computers
-    are strange and start at 0. Zero's history is cray: [ https://yaleglobal.yale.edu/history-zero ]
--}
+        Add ->
+            let
+                todo =
+                    -- [ { desc = "my todo three"
+                    --   , isComplete = False
+                    --   , uniqueId = List.length model.todoItems
+                    --   }
+                    -- ]
+                    newTodo model.data
+            in
+                { model
+                    | todoItems =
+                        if String.isEmpty model.data then
+                            model.todoItems
+                        else
+                            model.todoItems ++ todo
+                }
+
+        UpdateField str ->
+            { model | data = str }
 
 
-view =
+view model =
     div []
         [ h1 [] [ text "Todo" ]
         , div [ class "todos-box" ]
-            [ p [] [ text "our todos will go here" ]
+            [ p []
+                [ text "our todos will go here" ]
+            , viewInput model
             , viewTodos
             ]
         ]
@@ -90,27 +100,39 @@ viewTodos =
         renderEntry ({ desc, isComplete, uniqueId } as todoItem) =
             li [] [ text (String.join " " [ (toString desc), (toString uniqueId), (toString isComplete) ]) ]
     in
-        div [] (List.map renderEntry model.todoItems)
+        div [ style [ ( "list-style", "none" ) ] ]
+            [ p
+                [ style
+                    [ ( "font-weight", "bold" )
+                    ]
+                ]
+                [ text "Todo Name | Todo Id | Todo Status" ]
+            , ul [] (List.map renderEntry model.todoItems)
+            ]
+
+
+viewInput model =
+    div []
+        [ input
+            [ type_ "text"
+            , placeholder "What needs to be done?"
+            , name "newTodo"
+            , onInput UpdateField
+            ]
+            []
+        , span [ style [ ( "margin-left", "4px" ) ] ] [ text model.data ]
+        , button [ onClick Add ] [ text "coming soon: Add Todo" ]
+        ]
 
 
 
--- THE DEAL WITH 'let / in' --
-{- Ok so anytime you see 'let' it means, "everything until the 'in' is a building block I'm going to use in the part
-    after the 'in' " Just like 'lambda' functions, 'let' gives you a temporary namespace to define variables,
-   functions etc. Compare the alternative below, which does the same thing:
-    `
-            renderEntry entry =
-                li [] [ text (toString entry) ]
-            viewTodos =
-                div [] (List.map renderEntry model.todos)
-    BUT it's kind of weird right? I mean one line per function? And they go together kind right?
-    Doesn't that maybe feel weird like it would be nice to combine them?
-    If you feel this way, Let / In is your friend. viewTodos in this case is like,
-    "hey I need a function for this other function.
-    Lemme make that first and then I can use it for the List.map which needs a function..."
--}
+-- I don't really understand how or why main words the way it does.
+-- One more thing to the database of things to learn about
 
 
-main : Html msg
 main =
-    view
+    Html.beginnerProgram
+        { model = model
+        , view = view
+        , update = update
+        }
