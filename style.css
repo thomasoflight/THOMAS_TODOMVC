@@ -12,20 +12,55 @@ h1 {
     margin: auto;
     padding: 7px;
     background-color: #e6eaeb;
-    border: 5px solid #f1ffe7;
-    border-radius: 4px;
     text-align: center;
-    font-family: 'Montserrat';
+
+    border: 5px solid transparent;
+    border-radius: 10px;
+
+    -moz-border-image: -moz-linear-gradient(top, #3acfd5 0%, #3a4ed5 100%);
+    -webkit-border-image: -webkit-linear-gradient(top, #3acfd5 0%, #3a4ed5 100%);
+    border-image: linear-gradient(to bottom, #cfe1c3 0%, #b8d5ac 100%);
+
+    border-image-slice: 1;
+
 }
 
 
+.gradient-border-green {
+    border: 5px solid transparent;
+    border-radius: 4px;
+
+    -moz-border-image: -moz-linear-gradient(top, #3acfd5 0%, #3a4ed5 100%);
+    -webkit-border-image: -webkit-linear-gradient(top, #3acfd5 0%, #3a4ed5 100%);
+    border-image: linear-gradient(to bottom, #cfe1c3 0%, #b8d5ac 100%);
+
+    border-image-slice: 1;
+	}
+
 input[type=text] {
+    border: none;
+    border-bottom: 1px solid #e6eaeb;
+    font-weight: lighter;
+}
+
+li, ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-family: inherit;
+    
+
+}
+
+.todo-items {
+    margin: auto;
     width: 92%;
     height: 40px;
-    border: 4px solid #c5c3bc;
-    border-radius: 5px;
+    background-color: #fff;
+    border-bottom: 1px solid #e6eaeb;
     padding: 2px 0 0 16px;
     font-size: 1.7em;
     font-weight: lighter;
+    text-align: left;
     color: grey;
 }
