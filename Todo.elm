@@ -25,13 +25,13 @@ main =
 
 init : ( Model, Cmd msg )
 init =
-    ( Model [] "..." 0, Cmd.none )
+    ( Model [] "" 0, Cmd.none )
 
 
 type alias Model =
     { todoItems : List TodoItem
     , data : String
-    , uidCounter : Int -- why?
+    , uidCounter : Int
     }
 
 
@@ -76,8 +76,9 @@ onEnter msg =
 
 type Msg
     = NoOp
-    | Add
     | UpdateField String
+    | ToggleComplete Int Bool
+    | Add
 
 
 update msg model =
@@ -87,21 +88,36 @@ update msg model =
 
         Add ->
             { model
-                | data = ""
-                , uidCounter = model.uidCounter + 1
+                | uidCounter = model.uidCounter + 1
                 , todoItems =
                     if String.isEmpty model.data then
                         model.todoItems
                     else
                         model.todoItems ++ (newTodo model.data model.uidCounter)
+                , data = ""
             }
                 ! []
 
         UpdateField str ->
             { model | data = str } ! []
 
+        ToggleComplete uid bool ->
+            let
+                isCompleted todo =
+                    if todo.uid == uid then
+                        { todo | isComplete = bool }
+                    else
+                        todo
+            in
+                { model | todoItems = List.map isCompleted model.todoItems } ! []
 
 
+
+{- Run this function against entries that aren't checked
+   In an 'ObjOr language' this would be something like entries[id], we
+   might try to modify it directly. In Elm however we promised we would
+   always return the same tuple of (Model, Cmd msg)
+-}
 -- I'd like to know more about this virtual dom thing
 -- I keep hearing about it and I want to better understand virtualization
 -- Msg's vs msg's. What is the deal friends? The deal is this:
@@ -127,8 +143,8 @@ view model =
     div []
         [ h1 [] [ text "Todo" ]
         , div [ class "todos-box" ]
-            [ viewInput model
-            , viewTodos model
+            [ viewInput model.data
+            , viewTodos model.todoItems
             ]
         ]
 
@@ -137,29 +153,37 @@ view model =
 -- Msg vs. msg has to do with using functions in the view. The functions viewInput
 
 
-viewTodos : Model -> Html hotdog
-viewTodos model =
+viewTodos : List TodoItem -> Html Msg
+viewTodos todoItems =
     let
         renderEntry todo =
-            li [ class "todo-items" ] [ text (todo.desc ++ " " ++ (toString todo.uid)) ]
+            li [ class "todo-items" ]
+                [ input
+                    [ type_ "checkbox"
+                    , checked todo.isComplete
+                    , onClick (ToggleComplete todo.uid (not todo.isComplete))
+                    ]
+                    []
+                , label [ style [ ( "padding-left", "12px" ) ] ] [ text (todo.desc ++ " " ++ (toString todo.isComplete)) ]
+                ]
     in
         div []
             [ ul
                 []
                 (List.map
                     renderEntry
-                    model.todoItems
+                    todoItems
                 )
             ]
 
 
-viewInput : Model -> Html Msg
-viewInput model =
+viewInput : String -> Html Msg
+viewInput data =
     div []
         [ input
             [ class "todo-items"
-            , type_ "text"
             , placeholder "What needs to be done?"
+            , value data
             , name "newTodo"
             , onInput UpdateField
             , onEnter Add
