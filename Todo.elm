@@ -8,12 +8,6 @@ import Json.Decode as Json
 
 
 main : Program Never Model Msg
-
-
-
--- I'd like to understand what this does
-
-
 main =
     Html.program
         { init = init
@@ -25,13 +19,20 @@ main =
 
 init : ( Model, Cmd msg )
 init =
-    ( Model [] "" 0, Cmd.none )
+    ( Model [] "" 0 "all", Cmd.none )
+
+
+
+{- By adding a visibility field to the model we can change
+   which todo items appear using CSS classes.
+-}
 
 
 type alias Model =
     { todoItems : List TodoItem
     , data : String
     , uidCounter : Int
+    , visibility : String
     }
 
 
@@ -52,12 +53,6 @@ newTodo userInput uid =
 
 
 onEnter : Msg -> Attribute Msg
-
-
-
--- would also like to know what this A M thing is
-
-
 onEnter msg =
     let
         isEnter code =
@@ -76,9 +71,13 @@ onEnter msg =
 
 type Msg
     = NoOp
+    | Add
     | UpdateField String
     | ToggleComplete Int Bool
-    | Add
+    | MarkCompleteAll
+    | DeleteOneTodo Int
+    | DeleteCompleted
+    | ChangeVisibility String
 
 
 update msg model =
@@ -111,31 +110,21 @@ update msg model =
             in
                 { model | todoItems = List.map isCompleted model.todoItems } ! []
 
+        MarkCompleteAll ->
+            if List.all .isComplete model.todoItems then
+                { model | todoItems = List.map (\t -> { t | isComplete = False }) model.todoItems } ! []
+            else
+                { model | todoItems = List.map (\t -> { t | isComplete = True }) model.todoItems } ! []
 
+        DeleteOneTodo uid ->
+            { model | todoItems = List.filter (\t -> t.uid /= uid) model.todoItems }
+                ! []
 
-{- Run this function against entries that aren't checked
-   In an 'ObjOr language' this would be something like entries[id], we
-   might try to modify it directly. In Elm however we promised we would
-   always return the same tuple of (Model, Cmd msg)
--}
--- I'd like to know more about this virtual dom thing
--- I keep hearing about it and I want to better understand virtualization
--- Msg's vs msg's. What is the deal friends? The deal is this:
--- If you imagine that your functions and their data are like a tree,
--- you must step through the code and see all the places `view` goes to.
--- A brief tour of `view`:
--- 1) all the div [] and h1 [] shit is Html msg stuff. it's the basic
---    building block for making our pages. Just think of it as a 1:1 translation of <brackets>
--- 2) viewTodos and viewInput are like big branches departing from the branch of `view`.
---    what are their annotations? As you'll see they are different.
---    viewInput returns one of our handcrafted Starbucks Msg's.
--- 3) To sum it up: you must walk the tree. In this case we know that view is always
---    going to call viewInput which we know always returns a Msg. therefore view is
---    is always going to return a Msg, otherwise it would mean that viewInput was broken
--- 3b)  to illustrate this further, you can take out viewInput and change the annotation
---      to msg and it's totally fine (it compiles) because now `view` and `viewTodos` are both returning
---      the same shit, Html msgs. Html msg = basic building block, bracket stuff. Html Msg
---      is the the same Html stuff as msg (which is anything), but it's special
+        DeleteCompleted ->
+            { model | todoItems = List.filter (\t -> t.isComplete /= True) model.todoItems } ! []
+
+        ChangeVisibility str ->
+            { model | visibility = str } ! []
 
 
 view : Model -> Html Msg
@@ -144,45 +133,73 @@ view model =
         [ h1 [] [ text "Todo" ]
         , div [ class "todos-box" ]
             [ viewInput model.data
-            , viewTodos model.todoItems
+            , viewTodos model.todoItems model.visibility
+            , footer []
+                [ button [ onClick (DeleteCompleted) ] []
+                , button [ onClick (ChangeVisibility "all") ] [ text "all" ]
+                , button [ onClick (ChangeVisibility "active") ] [ text "active" ]
+                , button [ onClick (ChangeVisibility "completed") ] [ text "completed" ]
+                , p [] [ text (model.visibility) ]
+                ]
             ]
         ]
 
 
-
--- Msg vs. msg has to do with using functions in the view. The functions viewInput
-
-
-viewTodos : List TodoItem -> Html Msg
-viewTodos todoItems =
+viewTodos : List TodoItem -> String -> Html Msg
+viewTodos todoItems visibility =
     let
         renderEntry todo =
-            li [ class "todo-items" ]
-                [ input
-                    [ type_ "checkbox"
-                    , checked todo.isComplete
-                    , onClick (ToggleComplete todo.uid (not todo.isComplete))
-                    ]
+            div
+                [ case visibility of
+                    "active" ->
+                        if todo.isComplete then
+                            class "hidden"
+                        else
+                            class "active"
+
+                    "completed" ->
+                        if (not todo.isComplete) then
+                            class "hidden"
+                        else
+                            class "active"
+
+                    _ ->
+                        class "active"
+                ]
+                [ li
                     []
-                , label [ style [ ( "padding-left", "12px" ) ] ] [ text (todo.desc ++ " " ++ (toString todo.isComplete)) ]
+                    [ input
+                        [ type_ "checkbox"
+                        , checked todo.isComplete
+                        , onClick (ToggleComplete todo.uid (not todo.isComplete))
+                        ]
+                        []
+                    , label [] [ text (todo.desc) ]
+                    , button [ class "delete-one-todo", onClick (DeleteOneTodo todo.uid) ] []
+                    ]
                 ]
     in
-        div []
-            [ ul
-                []
-                (List.map
-                    renderEntry
-                    todoItems
-                )
-            ]
+        ul [ class "todo-items" ]
+            (List.map
+                renderEntry
+                todoItems
+            )
 
 
 viewInput : String -> Html Msg
 viewInput data =
     div []
         [ input
-            [ class "todo-items"
+            [ type_ "checkbox"
+            , checked False
+            , onClick MarkCompleteAll
+            ]
+            []
+        , input
+            [ class "todo-insert-new"
+            , type_ "text"
             , placeholder "What needs to be done?"
+            , autofocus True
             , value data
             , name "newTodo"
             , onInput UpdateField
@@ -190,9 +207,3 @@ viewInput data =
             ]
             []
         ]
-
-
-
--- I don't really understand how or why main words the way it does.
--- One more thing to the database of things to learn about
--- ok
