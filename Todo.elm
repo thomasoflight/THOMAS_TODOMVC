@@ -57,23 +57,6 @@ newTodo userInput uid =
     ]
 
 
-onEnter : Msg -> Attribute Msg
-onEnter msg =
-    let
-        isEnter code =
-            if code == 13 then
-                Json.succeed msg
-            else
-                Json.fail "not ENTER"
-    in
-        on "keydown" (Json.andThen isEnter keyCode)
-
-
-
--- andThen? JSON? decoders?
--- are there other Msg's beside those listed below?
-
-
 type Msg
     = NoOp
     | Add
@@ -119,13 +102,13 @@ update msg model =
 
         ToggleComplete uid bool ->
             let
-                isCompleted todo =
+                isComplete todo =
                     if todo.uid == uid then
                         { todo | isComplete = bool }
                     else
                         todo
             in
-                { model | todoItems = List.map isCompleted model.todoItems } ! []
+                { model | todoItems = List.map isComplete model.todoItems } ! []
 
         ToggleAllComplete ->
             if List.all .isComplete model.todoItems then
@@ -156,35 +139,40 @@ update msg model =
                       ]
 
 
+
+{- we don't need a "todomvc-wrapper" since we don't have a sidebar in this
+   example
+-}
+{- we moved h1 element and placed into a subsection below.
+   Since the main view function is the highest level, we want to keep
+   more detailed stuff in separate functions below. The main view
+   is just putting it all together for us.
+-}
+
+
 view : Model -> Html Msg
 view model =
     div []
-        -- class "todomvc-wrapper" we don't have a sidebar on our cloned
-        -- so it's probably ok to leave this out
-        [ section []
-            [ div
-                [ class "todos-box"
-                ]
-                {- we moved h1 element and placed into a subsection below.
-                   Since the main view function is the highest level, we want to keep
-                   more detailed stuff in separate functions below. The main view
-                   is just putting it all together for us.
-                -}
-                [ lazy2 renderMainInput model.todoInputData model.todoItems
-                , lazy2 renderTodoItems model.todoItems model.visibility
-                , lazy renderFilters model
-                ]
-            , infoFooter
+        [ section
+            [ class "todos-box" ]
+            [ lazy2 renderMainInput model.todoInputData model.todoItems
+            , lazy2 renderTodoItems model.todoItems model.visibility
+            , lazy renderFilters model
             ]
+        , infoFooter
         ]
+
+
+
+-- we moved allComplete to a new section
+-- moving from general div to more semantic html tags e.g. section/header/footer...
 
 
 renderMainInput : String -> List TodoItem -> Html Msg
 renderMainInput todoInputData todoItems =
-    -- we moved allComplete to a new section
-    -- moving from general div to more semantic html tags e.g. section/header/footer...
-    header []
-        [ h1 [] [ text "Todo" ]
+    header
+        []
+        [ h1 [] [ text "todos" ]
         , input
             [ class "todo-insert-new"
             , placeholder "What needs to be done?"
@@ -198,43 +186,83 @@ renderMainInput todoInputData todoItems =
         ]
 
 
+onEnter : Msg -> Attribute Msg
+onEnter msg =
+    let
+        isEnter code =
+            if code == 13 then
+                Json.succeed msg
+            else
+                Json.fail "not ENTER"
+    in
+        on "keydown" (Json.andThen isEnter keyCode)
+
+
+
+-- VIEW ALL TODO ITEMS
+
+
 renderTodoItems : List TodoItem -> String -> Html Msg
 renderTodoItems todoItems visibility =
     let
-        forRender =
+        forRender todo =
             case visibility of
-                "active" ->
-                    List.filter (\a -> a.isComplete /= True) todoItems
-
                 "completed" ->
-                    List.filter .isComplete todoItems
+                    todo.isComplete
+
+                "active" ->
+                    not todo.isComplete
 
                 _ ->
-                    todoItems
+                    True
 
         allComplete =
             List.all .isComplete todoItems && (not (List.isEmpty todoItems))
+
+        cssVisibility =
+            if List.isEmpty todoItems then
+                "hidden"
+            else
+                "visible"
     in
-        section []
+        section
+            [ class "rendered-todos"
+            , style [ ( "visibility", cssVisibility ) ]
+            ]
             [ input
-                [ type_ "checkbox"
+                [ class "toggle-all"
+                , type_ "checkbox"
+                , name "toggle"
                 , checked allComplete
                 , onClick ToggleAllComplete
                 ]
                 []
-            , label [ for "toggle-all" ] [ text "Mark all as complete" ]
-            , ul [ class "todo-items" ] <| List.map renderOneTodo forRender
+            , label
+                [ for "toggle-all" ]
+                [ text "Mark all as complete" ]
+            , Keyed.ul [ class "todo-items" ] <|
+                List.map viewKeyedEntry (List.filter forRender todoItems)
             ]
+
+
+
+-- VIEW EACH TODO
+
+
+viewKeyedEntry : TodoItem -> ( String, Html Msg )
+viewKeyedEntry todo =
+    ( toString todo.uid, lazy renderOneTodo todo )
 
 
 renderOneTodo : TodoItem -> Html Msg
 renderOneTodo todo =
     li
-        [ classList [ ( "editing", todo.isEditing ) ] ]
+        [ classList [ ( "completed", todo.isComplete ), ( "editing", todo.isEditing ) ] ]
         [ div
             [ class "view" ]
             [ input
-                [ type_ "checkbox"
+                [ class "toggle"
+                , type_ "checkbox"
                 , checked todo.isComplete
                 , onClick (ToggleComplete todo.uid (not todo.isComplete))
                 ]
@@ -251,7 +279,7 @@ renderOneTodo todo =
             , onBlur (EditEntry todo.uid False)
             , onEnter (EditEntry todo.uid False)
             ]
-            [ text (todo.desc) ]
+            []
         ]
 
 
