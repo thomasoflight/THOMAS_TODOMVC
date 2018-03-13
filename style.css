@@ -64,7 +64,7 @@ button {
     font-smoothing: antialiased;
 }
 
-.todos-box {
+.todoapp {
     background: #fff;
     box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 25px 50px 0 rgba(0, 0, 0, 0.1);
     font-size: 1.7em;
@@ -81,17 +81,17 @@ button {
     padding: 12px 12px 12px 55px;
     }
 
-.todos-box input[type="text"] {
+.todoapp input[type="text"] {
     font-size: inherit;
 }
 
-.todo-items {
+.todo-list {
     margin: 0;
     padding: 0;
     list-style: none;
 }
 
-.todo-items li, label {
+.todo-list li, label {
     white-space: pre-line;
     word-break: break-all;
     padding: 15px 60px 15px 15px;
@@ -103,7 +103,7 @@ button {
 
 
 
-.todos-box li .delete-one-todo {
+.todoapp li .destroy {
     display: none;
     position: absolute;
     top: 0;
@@ -118,28 +118,28 @@ button {
     transition: color 0.2s ease-out;
 }
 
-.todos-box  li .delete-one-todo:hover {
+.todoapp  li .destroy:hover {
     color: #af5b5e;
 }
 
-.todos-box li .delete-one-todo:after {
+.todoapp li .destroy:after {
     content: '×';
 }
 
-.todos-box li:hover .delete-one-todo {
+.todoapp li:hover .destroy {
     display: block;
 }
 */
 
-.todos-box li.editing .view {
+.todoapp li.editing .view {
     display: none;
 }
 
-.todos-box li .edit {
+.todoapp li .edit {
     display: none;
 }
 
-.todos-box li.editing .edit {
+.todoapp li.editing .edit {
     display: block;
 }
 
@@ -149,4 +149,26 @@ button {
 
 .active {
     display: inherit;
+}
+
+.info {
+    margin: 65px auto 0;
+    color: #bfbfbf;
+    font-size: 10px;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+    text-align: center;
+}
+
+.info p {
+    line-height: 1;
+}
+
+.info a {
+    color: inherit;
+    text-decoration: none;
+    font-weight: 400;
+}
+
+.info a:hover {
+    text-decoration: underline;
 }
